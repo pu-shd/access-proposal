@@ -1,0 +1,27 @@
+{
+  "name": "access-proposal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static web form that assembles Princeton Research Computing cluster access proposals and sponsorship requests.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test test/*.test.js",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "serve": "node scripts/serve.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/jsdom": "21.1.7",
+    "@types/node": "22.20.5",
+    "eslint": "9.39.5",
+    "globals": "15.15.0",
+    "jsdom": "25.0.1",
+    "typescript": "5.9.3"
+  }
+}

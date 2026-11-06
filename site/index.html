@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Access Proposal Builder</title>
+  <meta name="description" content="Assemble Princeton Research Computing cluster access proposals and sponsorship requests.">
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="paper.css">
+</head>
+<body>
+  <header class="app-header no-print">
+    <h1>Access Proposal Builder</h1>
+    <p>Builds Princeton Research Computing access requests for the large clusters (Della, Stellar, Tiger), following the
+      <a href="https://researchcomputing.princeton.edu/get-started/get-account" target="_blank" rel="noopener">Access Request guidelines</a>.
+      Everything stays in your browser.</p>
+  </header>
+
+  <main class="layout">
+    <form id="form" class="panel no-print" autocomplete="off" novalidate>
+      <fieldset class="mode">
+        <legend>Request type</legend>
+        <label class="choice">
+          <input type="radio" name="mode" value="proposal" checked>
+          <span><strong>New project proposal</strong><br>
+            The faculty member submits a brief proposal (PDF, at most 3 pages) for a group that is not yet on the cluster.</span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="mode" value="sponsor">
+          <span><strong>Sponsor additional users</strong><br>
+            The faculty member already has an approved project and emails <code>cses@princeton.edu</code> to add users.</span>
+        </label>
+      </fieldset>
+
+      <fieldset data-mode="proposal">
+        <legend>1. Collect details from the researcher</legend>
+        <details>
+          <summary>Questionnaire to send the researcher</summary>
+          <pre id="template" class="email"></pre>
+          <button type="button" id="copy-template">Copy questionnaire</button>
+        </details>
+        <label for="reply">Paste the researcher’s reply</label>
+        <textarea id="reply" rows="6" placeholder="Paste the whole email; quoted history and sign-offs are ignored."></textarea>
+        <div class="row">
+          <button type="button" id="parse-reply">Fill form from reply</button>
+          <span id="parse-status" class="status" role="status"></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span data-mode="proposal">2. </span>Cluster and people</legend>
+        <div class="field">
+          <span class="label">System(s)</span>
+          <div class="checks" id="systems">
+            <label><input type="checkbox" name="systems" value="Della"> Della</label>
+            <label><input type="checkbox" name="systems" value="Stellar"> Stellar</label>
+            <label><input type="checkbox" name="systems" value="Tiger"> Tiger</label>
+          </div>
+          <label for="otherSystem" class="sub">Other system (optional)</label>
+          <input id="otherSystem" name="otherSystem" type="text">
+        </div>
+
+        <div class="field">
+          <span class="label">Sponsoring faculty member(s)</span>
+          <div id="sponsors" class="people"></div>
+          <button type="button" class="add" data-add="sponsors">+ Add sponsor</button>
+        </div>
+
+        <div class="field">
+          <span class="label">Researchers who need accounts</span>
+          <div id="researchers" class="people"></div>
+          <button type="button" class="add" data-add="researchers">+ Add researcher</button>
+          <p id="rcu-note" class="note" hidden>Non-Princeton researchers need a Research Computer User (RCU) account sponsored by a Princeton faculty or staff member.</p>
+        </div>
+      </fieldset>
+
+      <fieldset data-mode="sponsor">
+        <legend>Access details</legend>
+        <label for="groupAccess">Group directories or other resources (optional)</label>
+        <input id="groupAccess" name="groupAccess" type="text" placeholder="e.g. /projects/GROUPNAME">
+        <label for="notes">Additional notes (optional)</label>
+        <textarea id="notes" name="notes" rows="3"></textarea>
+      </fieldset>
+
+      <fieldset data-mode="proposal">
+        <legend>3. Project</legend>
+        <label for="title">Project title (optional; shown as subtitle)</label>
+        <input id="title" name="title" type="text">
+        <label for="background">Scientific background and merit <span class="hint">blank line = new paragraph</span></label>
+        <textarea id="background" name="background" rows="8"></textarea>
+      </fieldset>
+
+      <fieldset data-mode="proposal">
+        <legend>4. Programming approach</legend>
+        <label for="languages">Programming language(s)</label>
+        <input id="languages" name="languages" type="text" placeholder="Python">
+        <label for="parallelization">Parallelization mechanism</label>
+        <input id="parallelization" name="parallelization" type="text" placeholder="MPI, OpenMP, or None">
+        <label for="libraries">Required software libraries <span class="hint">comma separated</span></label>
+        <input id="libraries" name="libraries" type="text">
+      </fieldset>
+
+      <fieldset data-mode="proposal">
+        <legend>5. Resource requirements</legend>
+        <div class="grid2">
+          <div><label for="cpuCores">CPU cores</label><input id="cpuCores" name="cpuCores" type="text"></div>
+          <div><label for="cpuMemory">CPU memory</label><input id="cpuMemory" name="cpuMemory" type="text"></div>
+          <div><label for="gpus">GPUs</label><input id="gpus" name="gpus" type="text" placeholder="e.g. 2 × A100, or None"></div>
+          <div><label for="runTime">Total run time</label><input id="runTime" name="runTime" type="text"></div>
+          <div><label for="diskSpace">Total disk space</label><input id="diskSpace" name="diskSpace" type="text"></div>
+          <div><label for="sharedStorage">Shared storage (optional)</label><input id="sharedStorage" name="sharedStorage" type="text"></div>
+        </div>
+        <label for="duration">Requested duration (optional)</label>
+        <input id="duration" name="duration" type="text" placeholder="e.g. 12 months, beginning January 2027">
+        <label for="justification">Resource justification (optional)</label>
+        <textarea id="justification" name="justification" rows="3"></textarea>
+      </fieldset>
+
+      <fieldset data-mode="proposal">
+        <legend>6. References</legend>
+        <label for="references">One per line <span class="hint">“Title -- Authors, Venue Year” is reformatted</span></label>
+        <textarea id="references" name="references" rows="5"></textarea>
+      </fieldset>
+
+      <fieldset class="tools">
+        <legend>Save and reuse</legend>
+        <div class="row">
+          <button type="button" id="export-json">Export form (.json)</button>
+          <label class="button" for="import-json">Import form…</label>
+          <input id="import-json" type="file" accept="application/json,.json" hidden>
+          <button type="button" id="clear" class="danger">Clear form</button>
+        </div>
+        <p class="status" id="io-status" role="status"></p>
+      </fieldset>
+    </form>
+
+    <section class="output" aria-label="Output">
+      <div class="panel no-print">
+        <ul id="issues" class="issues"></ul>
+        <div data-mode="proposal" class="row">
+          <button type="button" id="print" class="primary">Save as PDF</button>
+          <button type="button" id="download-md">Download Markdown</button>
+          <span id="pages" class="status"></span>
+        </div>
+        <p data-mode="proposal" class="hint">In the print dialog choose <em>Save as PDF</em>, paper size <em>Letter</em>, and turn off <em>Headers and footers</em>.</p>
+        <div data-mode="sponsor">
+          <p class="note">Per Research Computing policy, this request must be sent by the faculty member, not by members of the group.</p>
+          <div class="row">
+            <a id="mailto" class="button primary" href="mailto:cses@princeton.edu">Open in mail app</a>
+            <button type="button" id="copy-email">Copy email</button>
+            <span id="email-status" class="status" role="status"></span>
+          </div>
+          <pre id="email" class="email"></pre>
+        </div>
+      </div>
+      <article id="paper" class="paper" data-mode="proposal" lang="en"></article>
+    </section>
+  </main>
+
+  <template id="person-row">
+    <div class="person">
+      <input type="text" data-k="name" placeholder="Full name" aria-label="Full name">
+      <input type="text" data-k="netid" placeholder="NetID" aria-label="NetID" class="netid">
+      <label class="ext"><input type="checkbox" data-k="external"> Non-Princeton</label>
+      <button type="button" class="remove" aria-label="Remove">×</button>
+    </div>
+  </template>
+
+  <script type="module">
+    import { init } from './app.js';
+    init(document, window);
+  </script>
+</body>
+</html>

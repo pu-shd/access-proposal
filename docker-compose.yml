@@ -1,0 +1,11 @@
+services:
+  test:
+    build: .
+    command: ["npm", "run", "check"]
+  site:
+    build: .
+    command: ["node", "scripts/serve.js"]
+    environment:
+      PORT: "8000"
+    ports:
+      - "127.0.0.1:8000:8000"

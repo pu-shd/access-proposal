@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+__pycache__/
+*.db
+.env*
+!example.env
+.DS_Store
+*.pdf
+CLAUDE.md
+.claude/

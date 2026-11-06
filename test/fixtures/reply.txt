@@ -1,0 +1,30 @@
+Hi Pat,
+
+The scientific background for your project including scientific merit of the proposed work:
+Coastal flooding forecasts depend on ensemble ocean simulations that are too expensive to run at high resolution.
+We propose learned surrogate models that emulate the ensemble at a fraction of the cost.
+
+The surrogates will be validated against observed storm surges: they must match tide-gauge records.
+
+Programming language: python, C++
+Parallelization mechanism: none
+Required software libraries: Pytorch, jax, numpy and mpi4py.
+
+Number of CPU-cores: 32
+CPU memory: 128GB RAM
+GPUs (https://researchcomputing.princeton.edu/systems/della#Hardware-Configuration): 2/4 * A100
+Total run time: 40 GPU hours per week
+Total disk space: 2TB
+
+A few references or citations:
+Learning skillful medium-range global weather forecasting -- R Lam et al., Science 2023
+Fourier Neural Operator for Parametric PDEs: Z Li et al., ICLR 2021
+
+Please let me know if you need anything else!
+
+Thanks,
+Sam
+
+On Mon, Oct 5, 2026 at 9:00 AM Pat Example <pexample@princeton.edu> wrote:
+> Programming language(s)
+> GPUs: should not be parsed
