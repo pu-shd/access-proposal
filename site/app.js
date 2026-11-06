@@ -7,9 +7,9 @@ import { renderProposal } from './render.js';
 
 const STORAGE_KEY = 'access-proposal:draft:v1';
 const TEXT_FIELDS = /** @type {const} */ ([
-  'otherSystem', 'title', 'background', 'languages', 'parallelization', 'libraries', 'cpuCores',
+  'otherSystem', 'systemDetails', 'title', 'background', 'languages', 'parallelization', 'libraries', 'cpuCores',
   'cpuMemory', 'gpus', 'runTime', 'diskSpace', 'sharedStorage', 'duration', 'justification',
-  'references', 'groupAccess', 'notes',
+  'references', 'groupAccess', 'notes', 'softwareNotes',
 ]);
 /** Letter paper (11in) minus 1in top and bottom margins, at 96 CSS px per inch. */
 const PAGE_CONTENT_PX = 9 * 96;

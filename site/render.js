@@ -36,6 +36,17 @@ export function renderProposal(doc, container) {
     for (const block of section.blocks) {
       if (block.type === 'table') {
         const table = el('table', 'tex-table');
+        if (block.header) {
+          const thead = el('thead');
+          const tr = el('tr');
+          for (const label of block.header) {
+            const th = el('th', undefined, label);
+            th.setAttribute('scope', 'col');
+            tr.append(th);
+          }
+          thead.append(tr);
+          table.append(thead);
+        }
         const tbody = el('tbody');
         for (const [label, value] of block.rows) {
           const tr = el('tr');

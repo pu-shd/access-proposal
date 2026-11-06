@@ -161,3 +161,24 @@ test('copy reports failure when the clipboard is unavailable', async () => {
   await new Promise((r) => setTimeout(r, 0));
   assert.match($('parse-status').textContent ?? '', /Copy failed/);
 });
+
+test('system details, software notes, and the resource header appear in the preview', () => {
+  boot();
+  type('systemDetails', 'GPU partition, NVIDIA A100');
+  type('softwareNotes', 'Software is installed in Conda environments.');
+  const paper = $('paper');
+  const firstRow = paper.querySelector('tbody tr');
+  assert.equal(firstRow?.querySelector('td')?.textContent, 'Della (GPU partition, NVIDIA A100)');
+  assert.ok([...paper.querySelectorAll('p')].some((p) => p.textContent === 'Software is installed in Conda environments.'));
+  const heads = [...paper.querySelectorAll('thead th')].map((th) => th.textContent);
+  assert.deepEqual(heads, ['Resource', 'Request']);
+  assert.equal(paper.querySelectorAll('thead').length, 1, 'only the resource table has a header');
+});
+
+test('system details are hidden in sponsor mode', () => {
+  boot();
+  const radio = /** @type {HTMLInputElement} */ (doc.querySelector('input[name="mode"][value="sponsor"]'));
+  radio.checked = true;
+  radio.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+  assert.equal($('systemDetails').hidden, true);
+});

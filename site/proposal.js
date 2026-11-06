@@ -10,6 +10,7 @@
  *   mode: 'proposal' | 'sponsor',
  *   systems: string[],
  *   otherSystem: string,
+ *   systemDetails: string,
  *   sponsors: Person[],
  *   researchers: Person[],
  *   title: string,
@@ -17,6 +18,7 @@
  *   languages: string,
  *   parallelization: string,
  *   libraries: string,
+ *   softwareNotes: string,
  *   cpuCores: string,
  *   cpuMemory: string,
  *   gpus: string,
@@ -29,7 +31,7 @@
  *   groupAccess: string,
  *   notes: string,
  * }} Model
- * @typedef {{ type: 'table', rows: [string, string][] }
+ * @typedef {{ type: 'table', rows: [string, string][], header?: [string, string] }
  *   | { type: 'paragraphs', items: string[] }
  *   | { type: 'list', items: string[] }} Block
  * @typedef {{ heading: string, blocks: Block[] }} Section
@@ -53,6 +55,7 @@ export function emptyModel() {
     mode: 'proposal',
     systems: ['Della'],
     otherSystem: '',
+    systemDetails: '',
     sponsors: [{ name: '', netid: '' }],
     researchers: [{ name: '', netid: '', external: false }],
     title: '',
@@ -60,6 +63,7 @@ export function emptyModel() {
     languages: '',
     parallelization: '',
     libraries: '',
+    softwareNotes: '',
     cpuCores: '',
     cpuMemory: '',
     gpus: '',
@@ -215,20 +219,79 @@ export function selectedSystems(m) {
   return [...m.systems, ...(other ? [other] : [])];
 }
 
+const SMALL_WORDS = new Set(('a an the and but or nor for so yet as at by in of off on per to up via from into onto ' +
+  'over with through upon vs versus').split(' '));
+
 /**
- * Format one free-form reference line. "Title -- Authors, Venue" becomes
- * “Title.” Authors, Venue.
+ * Title-case a title: capitalize the first letter of each word except short
+ * function words; words that already contain capitals and hyphenated tails are kept.
+ * @param {string} title
+ */
+export function titleCase(title) {
+  let startOfPhrase = true;
+  return title
+    .split(/(\s+)/)
+    .map((word) => {
+      if (/^\s+$/.test(word) || !word) return word;
+      const bare = word.toLowerCase().replace(/[^a-z]/g, '');
+      const keep = /[A-Z]/.test(word) || (!startOfPhrase && SMALL_WORDS.has(bare));
+      const out = keep ? word : word.charAt(0).toUpperCase() + word.slice(1);
+      startOfPhrase = /[:?!]$/.test(word);
+      return out;
+    })
+    .join('');
+}
+
+/** Words that mark the start of a venue rather than an author surname. */
+const VENUE_WORDS = /^(Transactions|Journal|Proceedings|Conference|Review|Reviews|Letters|Research|Science|Nature|Press|Symposium|Workshop|Annals|Communications|Physical|Advances)$/;
+/** "CS Brito", "C. S. Brito", "TCY Chan", "R Lam et al." */
+const AUTHOR_RE = /^((?:[A-Z]\.\s?){1,3}|[A-Z]{1,3})\s+([A-Z][a-z][A-Za-z'’-]*)(\s+et\s+al\.?)?$/;
+
+/**
+ * @param {string} seg
+ * @returns {{ name: string, etAl: boolean } | null}
+ */
+function parseAuthor(seg) {
+  const m = seg.trim().match(AUTHOR_RE);
+  if (!m || VENUE_WORDS.test(m[2])) return null;
+  const initials = m[1].replace(/[.\s]/g, '').split('').map((c) => `${c}.`).join(' ');
+  return { name: `${initials} ${m[2]}`, etAl: Boolean(m[3]) };
+}
+
+/**
+ * Format one free-form reference line. "Title -- Authors, Venue Year" becomes
+ * Authors. “Title.” Venue, Year. Lines without " -- " are kept as written.
  * @param {string} line
  */
 export function formatReference(line) {
   const t = line.trim().replace(/^(\[\d+\]|\d+[.)]|[-*•])\s*/, '');
   const parts = t.split(/\s+(?:--|—|–)\s+/);
-  if (parts.length >= 2) {
-    const title = parts[0].trim().replace(/[.,]$/, '');
-    const rest = parts.slice(1).join(', ').trim().replace(/\.$/, '');
-    return `“${title}.” ${rest}.`;
+  if (parts.length < 2) return t;
+  const title = titleCase(parts[0].trim().replace(/[.,]$/, ''));
+  let rest = parts.slice(1).join(', ').trim().replace(/\.$/, '');
+
+  /** @type {string[]} */
+  const authors = [];
+  let etAl = false;
+  while (rest && !etAl) {
+    const m = rest.match(/^(.+?)(?:\s*,\s*(?:and\s+)?|\s+and\s+|$)/);
+    if (!m) break;
+    const segment = m[1];
+    if (/^et\s+al\.?$/.test(segment.trim()) && authors.length) {
+      etAl = true;
+    } else {
+      const a = parseAuthor(segment);
+      if (!a) break;
+      authors.push(a.name);
+      etAl = a.etAl;
+    }
+    rest = rest.slice(m[0].length).trim();
   }
-  return t;
+
+  const venue = rest.replace(/,?\s+((?:19|20)\d{2})$/, ', $1');
+  if (!authors.length) return `“${title}.” ${venue}.`;
+  const who = etAl ? `${authors[0]} et al.` : `${joinAnd(authors)}.`;
+  return venue ? `${who} “${title}.” ${venue}.` : `${who} “${title}.”`;
 }
 
 /** @param {string} s */
@@ -260,10 +323,11 @@ export function buildProposal(input) {
   const systems = selectedSystems(m);
   const sponsors = m.sponsors.filter(named);
   const researchers = m.researchers.filter(named);
+  const details = tidy(m.systemDetails).replace(/^\((.*)\)$/, '$1');
 
   /** @type {[string, string][]} */
   const summary = [
-    [systems.length > 1 ? 'Systems requested' : 'System requested', joinAnd(systems)],
+    [systems.length > 1 ? 'Systems requested' : 'System requested', joinAnd(systems) + (details ? ` (${details})` : '')],
     [sponsors.length > 1 ? 'Sponsoring faculty members' : 'Sponsoring faculty member', sponsors.map(formatPerson).join('; ')],
     ['Researchers requiring accounts', researchers.map(formatPerson).join('; ')],
   ];
@@ -287,7 +351,12 @@ export function buildProposal(input) {
   ];
 
   /** @type {Block[]} */
-  const resourceBlocks = [{ type: 'table', rows: resources }];
+  const programmingBlocks = [{ type: 'table', rows: programming }];
+  const softwareNotes = splitParagraphs(m.softwareNotes);
+  if (softwareNotes.length) programmingBlocks.push({ type: 'paragraphs', items: softwareNotes });
+
+  /** @type {Block[]} */
+  const resourceBlocks = [{ type: 'table', rows: resources, header: ['Resource', 'Request'] }];
   const justification = splitParagraphs(m.justification);
   if (justification.length) resourceBlocks.push({ type: 'paragraphs', items: justification });
 
@@ -295,7 +364,7 @@ export function buildProposal(input) {
   const sections = [
     { heading: 'Project Summary', blocks: [{ type: 'table', rows: summary }] },
     { heading: 'Scientific Background and Merit', blocks: [{ type: 'paragraphs', items: splitParagraphs(m.background) }] },
-    { heading: 'Programming Approach', blocks: [{ type: 'table', rows: programming }] },
+    { heading: 'Programming Approach', blocks: programmingBlocks },
     { heading: 'Resource Requirements', blocks: resourceBlocks },
   ];
   const refs = splitLines(m.references).map(formatReference);
@@ -321,7 +390,8 @@ export function toMarkdown(doc) {
     out.push(`## ${i + 1}. ${sec.heading}`, '');
     for (const b of sec.blocks) {
       if (b.type === 'table') {
-        out.push('| | |', '|---|---|');
+        const cell = (/** @type {string} */ s) => s.replace(/\|/g, '\\|');
+        out.push(b.header ? `| ${cell(b.header[0])} | ${cell(b.header[1])} |` : '| | |', '|---|---|');
         for (const [k, v] of b.rows) out.push(`| **${k.replace(/\|/g, '\\|')}** | ${v.replace(/\|/g, '\\|')} |`);
       } else if (b.type === 'paragraphs') {
         out.push(b.items.join('\n\n'));

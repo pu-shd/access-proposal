@@ -24,8 +24,12 @@ Two request types, matching the two ways access is granted:
    - `none` → `None.`
    - `256GB` → `256 GB`, `2/4 * A100` → `2–4 × A100`
    - library and language names are canonicalized (`Pytorch, jax` → `PyTorch, JAX`)
-   - references written `Title -- Authors, Venue` → `“Title.” Authors, Venue.`
-   - empty optional rows (shared storage, duration, justification) are omitted, never shown as placeholders
+   - references written `Title -- CS Brito, ICML 2025` → `C. S. Brito. “Title.” ICML, 2025.`
+     (authors first, initials expanded, title in title case; lines without ` -- ` are kept as written)
+   - empty optional fields are omitted, never shown as placeholders
+4a. Optional extras: **System details** (shown in parentheses after the system, e.g. *GPU partition,
+   NVIDIA A100*), **Software notes** (a paragraph under the programming table, e.g. environments or
+   commercial licenses), shared storage, requested duration, and a resource justification.
 5. Click **Save as PDF**. In the print dialog choose *Save as PDF*, paper size *Letter*, and turn off
    *Headers and footers*. Keep an eye on the page estimate (limit 3).
 6. Use **Export form (.json)** to keep a copy for future renewals; **Import form…** restores it.

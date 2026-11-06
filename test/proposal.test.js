@@ -57,10 +57,10 @@ test('normalizeLibraries canonicalizes names, splits on "and", and dedupes', () 
   assert.equal(normalizeLanguages('python, c++'), 'Python, C++');
 });
 
-test('formatReference reorders "Title -- Authors, Venue" and strips numbering', () => {
+test('formatReference strips numbering and passes through unstructured lines', () => {
   assert.equal(
     formatReference('1. Imputing a convex objective function -- A Keshavarz, Y Wang, S Boyd, ISIC'),
-    '“Imputing a convex objective function.” A Keshavarz, Y Wang, S Boyd, ISIC.',
+    'A. Keshavarz, Y. Wang, and S. Boyd. “Imputing a Convex Objective Function.” ISIC.',
   );
   assert.equal(formatReference('[2] Plain citation, 2020.'), 'Plain citation, 2020.');
 });
@@ -167,7 +167,7 @@ test('toMarkdown renders numbered sections, tables, and escapes pipes', () => {
   assert.match(md, /^## 1\. Project Summary$/m);
   assert.match(md, /^## 5\. References$/m);
   assert.match(md, /^\| \*\*CPU cores\*\* \| 16 \\\| 32 \|$/m);
-  assert.match(md, /^1\. “Learning skillful medium-range global weather forecasting\.” R Lam et al\., Science 2023\.$/m);
+  assert.match(md, /^1\. R\. Lam et al\. “Learning Skillful Medium-range Global Weather Forecasting\.” Science, 2023\.$/m);
 });
 
 test('validate reports nothing for a complete proposal', () => {
@@ -240,4 +240,49 @@ test('coerceModel drops unknown keys, wrong types, and unknown systems', () => {
 test('fileBaseName uses systems, request type, and sponsor surname', () => {
   assert.equal(fileBaseName(fullModel()), 'della-access-proposal-example');
   assert.equal(fileBaseName({ ...emptyModel(), mode: 'sponsor', systems: [] }), 'cluster-access-request');
+});
+
+test('optional system details are shown after the system name', () => {
+  const summary = rowsOf(buildProposal(fullModel({ systemDetails: ' GPU partition,  NVIDIA A100 ' })), 'Project Summary');
+  assert.equal(summary['System requested'], 'Della (GPU partition, NVIDIA A100)');
+  assert.equal(rowsOf(buildProposal(fullModel()), 'Project Summary')['System requested'], 'Della');
+});
+
+test('optional software notes follow the programming table', () => {
+  const doc = buildProposal(fullModel({ softwareNotes: 'Conda environments.\n\nMOSEK academic license.' }));
+  const sec = doc.sections.find((s) => s.heading === 'Programming Approach');
+  assert.deepEqual(sec?.blocks[1], { type: 'paragraphs', items: ['Conda environments.', 'MOSEK academic license.'] });
+  assert.equal(buildProposal(fullModel()).sections.find((s) => s.heading === 'Programming Approach')?.blocks.length, 1);
+});
+
+test('the resource table has a Resource | Request header row', () => {
+  const sec = buildProposal(fullModel()).sections.find((s) => s.heading === 'Resource Requirements');
+  const table = sec?.blocks[0];
+  assert.ok(table && table.type === 'table');
+  assert.deepEqual(table.header, ['Resource', 'Request']);
+  assert.match(toMarkdown(buildProposal(fullModel())), /^\| Resource \| Request \|\n\|---\|---\|\n\| \*\*CPU cores\*\*/m);
+});
+
+test('formatReference puts authors first with expanded initials and a title-cased title', () => {
+  assert.equal(
+    formatReference('Cross-regularization: Adaptive Model Complexity through Validation Gradients -- CS Brito, ICML 2025'),
+    'C. S. Brito. “Cross-regularization: Adaptive Model Complexity through Validation Gradients.” ICML, 2025.',
+  );
+  assert.equal(
+    formatReference('Imputing a convex objective function -- A Keshavarz, Y Wang, S Boyd, IEEE International Symposium on Intelligent Control'),
+    'A. Keshavarz, Y. Wang, and S. Boyd. “Imputing a Convex Objective Function.” IEEE International Symposium on Intelligent Control.',
+  );
+  assert.equal(
+    formatReference('Inverse optimization: Theory and applications -- TCY Chan, R Mahmood, IY Zhu, Operations Research'),
+    'T. C. Y. Chan, R. Mahmood, and I. Y. Zhu. “Inverse Optimization: Theory and Applications.” Operations Research.',
+  );
+  assert.equal(
+    formatReference('Learning skillful medium-range global weather forecasting -- R Lam et al., Science 2023'),
+    'R. Lam et al. “Learning Skillful Medium-range Global Weather Forecasting.” Science, 2023.',
+  );
+  assert.equal(formatReference('A study -- J. Q. Public and J Doe, Nature 2020'), 'J. Q. Public and J. Doe. “A Study.” Nature, 2020.');
+});
+
+test('formatReference falls back to title-first when no authors are recognizable', () => {
+  assert.equal(formatReference('Some report -- National Lab internal'), '“Some Report.” National Lab internal.');
 });

@@ -58,6 +58,8 @@
           </div>
           <label for="otherSystem" class="sub">Other system (optional)</label>
           <input id="otherSystem" name="otherSystem" type="text">
+          <label for="systemDetails" class="sub" data-mode="proposal">System details (optional; shown in parentheses)</label>
+          <input id="systemDetails" name="systemDetails" type="text" data-mode="proposal" placeholder="e.g. GPU partition, NVIDIA A100">
         </div>
 
         <div class="field">
@@ -98,6 +100,8 @@
         <input id="parallelization" name="parallelization" type="text" placeholder="MPI, OpenMP, or None">
         <label for="libraries">Required software libraries <span class="hint">comma separated</span></label>
         <input id="libraries" name="libraries" type="text">
+        <label for="softwareNotes">Software notes (optional; shown below the table)</label>
+        <textarea id="softwareNotes" name="softwareNotes" rows="3" placeholder="e.g. environments, licenses for commercial software"></textarea>
       </fieldset>
 
       <fieldset data-mode="proposal">
@@ -118,7 +122,7 @@
 
       <fieldset data-mode="proposal">
         <legend>6. References</legend>
-        <label for="references">One per line <span class="hint">“Title -- Authors, Venue Year” is reformatted</span></label>
+        <label for="references">One per line <span class="hint">“Title -- Authors, Venue Year” is reordered to authors first</span></label>
         <textarea id="references" name="references" rows="5"></textarea>
       </fieldset>
 

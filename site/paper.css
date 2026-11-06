@@ -27,11 +27,14 @@
 .paper h2 + p, .paper table + p { text-indent: 0; }
 .paper ol { padding-left: 2em; margin: 4pt 0; }
 .paper li { margin: 2pt 0; text-align: justify; }
+.paper .tex-refs li { text-align: left; }
 /* booktabs-style tables: top/bottom rules only */
 .paper table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 6pt 0 8pt; font-size: 10.5pt;
   border-top: 1.2px solid #000; border-bottom: 1.2px solid #000; break-inside: avoid; }
 .paper th, .paper td { padding: 2.5pt 6pt; vertical-align: top; text-align: left; border: none; font-weight: normal; }
 .paper th { width: 38%; font-weight: bold; }
+.paper thead th { width: auto; border-bottom: 0.6px solid #000; }
+.paper thead th:first-child { width: 38%; }
 .paper td { overflow-wrap: anywhere; }
 .paper .tex-missing { color: #b00; }
 .paper code { font-family: "LM Mono", monospace; }
